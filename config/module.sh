@@ -1,1 +1,1 @@
-module-default.sh
+module-lite-hevc_custom.sh
