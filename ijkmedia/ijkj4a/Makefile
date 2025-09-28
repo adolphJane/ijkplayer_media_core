@@ -1,3 +1,15 @@
+# 这个 Makefile 是 ijkj4a 模块的 代码生成工具 ，它的主要作用是 自动从 Java 类文件生成对应的 JNI C 代码 ，而不是用于编译构建。这是一个 代码生成阶段的 Makefile 。
+
+# 实际应用场景
+# 开发阶段
+# 1. 修改 Java 类的接口
+# 2. 运行 make 重新生成 JNI 代码
+# 3. 编译测试新的 JNI 接口
+# 构建阶段
+# 1. 使用已生成的 JNI 代码
+# 2. Android.mk 直接编译这些代码
+# 3. 链接到最终的播放器库
+
 J4A = ../../extra/bin/j4a
 ROOT_CLASS_INCLUDES = j4a/j4a_allclasses.include.h
 ROOT_CLASS_LOADERS = j4a/j4a_allclasses.loader.h

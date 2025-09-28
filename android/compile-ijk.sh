@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-#环境变量检查
+#NDK环境变量检查
 if [ -z "$ANDROID_NDK" -o -z "$ANDROID_NDK" ]; then
     echo "You must define ANDROID_NDK, ANDROID_SDK before starting."
     echo "They must point to your NDK and SDK directories.\n"
@@ -24,30 +24,40 @@ if [ -z "$ANDROID_NDK" -o -z "$ANDROID_NDK" ]; then
 fi
 
 #变量定义
+# 目标架构
 REQUEST_TARGET=$1
+# 子命令
 REQUEST_SUB_CMD=$2
+# 32位架构列表
 ACT_ABI_32="armv5 armv7a"
+# 64位架构列表
 ACT_ABI_64="armv5 armv7a arm64"
+# 所有支持的架构
 ACT_ABI_ALL=$ACT_ABI_64
+# 操作系统类型
 UNAME_S=$(uname -s)
 
 #并行编译标志
 FF_MAKEFLAGS=
 if which nproc >/dev/null
 then
+    # Linux系统使用nproc获取CPU核心数
     FF_MAKEFLAGS=-j`nproc`
 elif [ "$UNAME_S" = "Darwin" ] && which sysctl >/dev/null
 then
+    # macOS系统使用sysctl获取CPU核心数
     FF_MAKEFLAGS=-j`sysctl -n machdep.cpu.thread_count`
 fi
 
 #子命令处理函数
 do_sub_cmd () {
     SUB_CMD=$1
+    # 符号链接处理逻辑
     if [ -L "./android-ndk-prof" ]; then
         rm android-ndk-prof
     fi
 
+    # 性能分析器配置
     if [ "$PARAM_SUB_CMD" = 'prof' ]; then
         echo 'profiler build: YES';
         ln -s ../../../../../../ijkprof/android-ndk-profiler/jni android-ndk-prof
@@ -56,18 +66,23 @@ do_sub_cmd () {
         ln -s ../../../../../../ijkprof/android-ndk-profiler-dummy/jni android-ndk-prof
     fi
 
+    # 子命令分发
     case $SUB_CMD in
         prof)
+            # 带性能分析的编译
             $ANDROID_NDK/ndk-build $FF_MAKEFLAGS
         ;;
         clean)
+            # 清理编译产物
             $ANDROID_NDK/ndk-build clean
         ;;
         rebuild)
+            # 重新编译
             $ANDROID_NDK/ndk-build clean
             $ANDROID_NDK/ndk-build $FF_MAKEFLAGS
         ;;
         *)
+            # 默认编译
             $ANDROID_NDK/ndk-build $FF_MAKEFLAGS
         ;;
     esac
@@ -95,31 +110,36 @@ do_ndk_build () {
 
 #主逻辑
 case "$REQUEST_TARGET" in
-    "")
+    "") # 默认编译armv7a
         do_ndk_build armv7a;
     ;;
-    armv5|armv7a|arm64|x86|x86_64)
+    armv5|armv7a|arm64|x86|x86_64) 
+        # 编译指定架构
         do_ndk_build $REQUEST_TARGET $REQUEST_SUB_CMD;
     ;;
-    all32)
+    all32) 
+        # 编译所有32位架构
         for ABI in $ACT_ABI_32
         do
             do_ndk_build "$ABI" $REQUEST_SUB_CMD;
         done
     ;;
-    all|all64)
+    all|all64) 
+        # 编译所有64位架构
         for ABI in $ACT_ABI_64
         do
             do_ndk_build "$ABI" $REQUEST_SUB_CMD;
         done
     ;;
     clean)
+        # 清理所有架构
         for ABI in $ACT_ABI_ALL
         do
             do_ndk_build "$ABI" clean;
         done
     ;;
     *)
+        # 显示使用帮助
         echo "Usage:"
         echo "  compile-ijk.sh armv5|armv7a|arm64|x86|x86_64"
         echo "  compile-ijk.sh all|all32"
