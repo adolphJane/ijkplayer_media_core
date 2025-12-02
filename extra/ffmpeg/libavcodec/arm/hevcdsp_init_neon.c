@@ -21,8 +21,12 @@
 #include "libavutil/attributes.h"
 #include "libavutil/arm/cpu.h"
 #include "libavcodec/hevcdsp.h"
+#include "libavcodec/avcodec.h"
 #include "hevcdsp_arm.h"
 
+
+void ff_hevc_sao_band_filter_neon_8_wrapper(uint8_t *_dst, uint8_t *_src,ptrdiff_t stride_dst, ptrdiff_t stride_src,int16_t *sao_offset_val, int sao_left_class,int width, int height);
+void ff_hevc_sao_edge_filter_neon_8_wrapper(uint8_t *_dst, uint8_t *_src, ptrdiff_t stride_dst, int16_t *sao_offset_val,int eo, int width, int height);
 void ff_hevc_v_loop_filter_luma_neon(uint8_t *_pix, ptrdiff_t _stride, int _beta, int *_tc, uint8_t *_no_p, uint8_t *_no_q);
 void ff_hevc_h_loop_filter_luma_neon(uint8_t *_pix, ptrdiff_t _stride, int _beta, int *_tc, uint8_t *_no_p, uint8_t *_no_q);
 void ff_hevc_v_loop_filter_chroma_neon(uint8_t *_pix, ptrdiff_t _stride, int *_tc, uint8_t *_no_p, uint8_t *_no_q);
