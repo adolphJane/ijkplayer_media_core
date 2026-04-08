@@ -52,6 +52,10 @@
 #define FFP_MSG_TIMED_TEXT                  800
 #define FFP_MSG_ACCURATE_SEEK_COMPLETE      900     /* arg1 = current position*/
 #define FFP_MSG_GET_IMG_STATE               1000    /* arg1 = timestamp, arg2 = result code, obj = file name*/
+#define FFP_MSG_HTTP_ERROR                  1001    /* arg1 = http_status_code */
+#define FFP_MSG_DNS_TIME                    1002    /* arg1 = dns_time_ms */
+#define FFP_MSG_TCP_CONNECT_TIME            1003    /* arg1 = tcp_connect_time_ms */
+#define FFP_MSG_HTTP_REQUEST_TIME           1004    /* arg1 = http_request_time_ms */
 
 #define FFP_MSG_VIDEO_DECODER_OPEN          10001
 

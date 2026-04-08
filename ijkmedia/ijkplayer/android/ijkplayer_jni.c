@@ -917,6 +917,22 @@ static void message_loop_n(JNIEnv *env, IjkMediaPlayer *mp)
             MPTRACE("FFP_MSG_ERROR: %d\n", msg.arg1);
             post_event(env, weak_thiz, MEDIA_ERROR, MEDIA_ERROR_IJK_PLAYER, msg.arg1);
             break;
+        case FFP_MSG_HTTP_ERROR:
+            MPTRACE("FFP_MSG_HTTP_ERROR: %d\n", msg.arg1);
+            post_event(env, weak_thiz, MEDIA_ERROR, MEDIA_ERROR_IJK_PLAYER, msg.arg1);
+            break;
+        case FFP_MSG_DNS_TIME:
+            MPTRACE("FFP_MSG_DNS_TIME: %d ms\n", msg.arg1);
+            post_event(env, weak_thiz, MEDIA_INFO, MEDIA_INFO_DNS_TIME, msg.arg1);
+            break;
+        case FFP_MSG_TCP_CONNECT_TIME:
+            MPTRACE("FFP_MSG_TCP_CONNECT_TIME: %d ms\n", msg.arg1);
+            post_event(env, weak_thiz, MEDIA_INFO, MEDIA_INFO_TCP_CONNECT_TIME, msg.arg1);
+            break;
+        case FFP_MSG_HTTP_REQUEST_TIME:
+            MPTRACE("FFP_MSG_HTTP_REQUEST_TIME: %d ms\n", msg.arg1);
+            post_event(env, weak_thiz, MEDIA_INFO, MEDIA_INFO_HTTP_REQUEST_TIME, msg.arg1);
+            break;
         case FFP_MSG_PREPARED:
             MPTRACE("FFP_MSG_PREPARED:\n");
             post_event(env, weak_thiz, MEDIA_PREPARED, 0, 0);

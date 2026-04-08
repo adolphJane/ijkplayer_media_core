@@ -3124,6 +3124,21 @@ static int read_thread(void *arg)
     }
     ffp_notify_msg1(ffp, FFP_MSG_OPEN_INPUT);
 
+    if (ic->pb) {
+        int64_t dns_time = 0;
+        int64_t tcp_connect_time = 0;
+        int64_t http_request_time = 0;
+        av_opt_get_int(ic->pb, "dns_time", AV_OPT_SEARCH_CHILDREN, &dns_time);
+        av_opt_get_int(ic->pb, "tcp_connect_time", AV_OPT_SEARCH_CHILDREN, &tcp_connect_time);
+        av_opt_get_int(ic->pb, "http_request_time", AV_OPT_SEARCH_CHILDREN, &http_request_time);
+        if (dns_time > 0)
+            ffp_notify_msg2(ffp, FFP_MSG_DNS_TIME, (int)dns_time);
+        if (tcp_connect_time > 0)
+            ffp_notify_msg2(ffp, FFP_MSG_TCP_CONNECT_TIME, (int)tcp_connect_time);
+        if (http_request_time > 0)
+            ffp_notify_msg2(ffp, FFP_MSG_HTTP_REQUEST_TIME, (int)http_request_time);
+    }
+
     if (scan_all_pmts_set)
         av_dict_set(&ffp->format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE);
 
@@ -3549,6 +3564,14 @@ static int read_thread(void *arg)
                 is->eof = 1;
                 ffp->error = pb_error;
                 av_log(ffp, AV_LOG_ERROR, "av_read_frame error: %s\n", ffp_get_error_string(ffp->error));
+                if (ic->pb) {
+                    int64_t http_code = 0;
+                    av_opt_get_int(ic->pb, "http_code", AV_OPT_SEARCH_CHILDREN, &http_code);
+                    if (http_code >= 400) {
+                        av_log(ffp, AV_LOG_ERROR, "http error: %d\n", (int)http_code);
+                        ffp_notify_msg2(ffp, FFP_MSG_HTTP_ERROR, (int)http_code);
+                    }
+                }
                 // break;
             } else {
                 ffp->error = 0;
@@ -3624,13 +3647,21 @@ static int read_thread(void *arg)
 
     ret = 0;
  fail:
-    if (ic && !is->ic)
-        avformat_close_input(&ic);
-
     if (!ffp->prepared || !is->abort_request) {
         ffp->last_error = last_error;
         ffp_notify_msg2(ffp, FFP_MSG_ERROR, last_error);
+        if (ic && ic->pb) {
+            int64_t http_code = 0;
+            av_opt_get_int(ic->pb, "http_code", AV_OPT_SEARCH_CHILDREN, &http_code);
+            if (http_code >= 400) {
+                av_log(ffp, AV_LOG_ERROR, "http error: %d\n", (int)http_code);
+                ffp_notify_msg2(ffp, FFP_MSG_HTTP_ERROR, (int)http_code);
+            }
+        }
     }
+
+    if (ic && !is->ic)
+        avformat_close_input(&ic);
     SDL_DestroyMutex(wait_mutex);
     return 0;
 }

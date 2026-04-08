@@ -41,6 +41,8 @@ typedef struct TCPContext {
     int listen_timeout;
     int recv_buffer_size;
     int send_buffer_size;
+    int64_t dns_time_ms;
+    int64_t tcp_connect_time_ms;
 } TCPContext;
 
 #define OFFSET(x) offsetof(TCPContext, x)
@@ -52,6 +54,8 @@ static const AVOption options[] = {
     { "listen_timeout",  "Connection awaiting timeout (in milliseconds)",      OFFSET(listen_timeout), AV_OPT_TYPE_INT, { .i64 = -1 },         -1, INT_MAX, .flags = D|E },
     { "send_buffer_size", "Socket send buffer size (in bytes)",                OFFSET(send_buffer_size), AV_OPT_TYPE_INT, { .i64 = -1 },         -1, INT_MAX, .flags = D|E },
     { "recv_buffer_size", "Socket receive buffer size (in bytes)",             OFFSET(recv_buffer_size), AV_OPT_TYPE_INT, { .i64 = -1 },         -1, INT_MAX, .flags = D|E },
+    { "dns_time", "DNS resolve time in milliseconds", OFFSET(dns_time_ms), AV_OPT_TYPE_INT64, { .i64 = 0 }, 0, INT64_MAX, AV_OPT_FLAG_EXPORT | AV_OPT_FLAG_READONLY },
+    { "tcp_connect_time", "TCP connect time in milliseconds", OFFSET(tcp_connect_time_ms), AV_OPT_TYPE_INT64, { .i64 = 0 }, 0, INT64_MAX, AV_OPT_FLAG_EXPORT | AV_OPT_FLAG_READONLY },
     { NULL }
 };
 
@@ -108,10 +112,15 @@ static int tcp_open(URLContext *h, const char *uri, int flags)
     snprintf(portstr, sizeof(portstr), "%d", port);
     if (s->listen)
         hints.ai_flags |= AI_PASSIVE;
-    if (!hostname[0])
-        ret = getaddrinfo(NULL, portstr, &hints, &ai);
-    else
-        ret = getaddrinfo(hostname, portstr, &hints, &ai);
+    {
+        int64_t dns_start = av_gettime_relative();
+        if (!hostname[0])
+            ret = getaddrinfo(NULL, portstr, &hints, &ai);
+        else
+            ret = getaddrinfo(hostname, portstr, &hints, &ai);
+        s->dns_time_ms = (av_gettime_relative() - dns_start) / 1000;
+        av_log(h, AV_LOG_INFO, "dns resolve time: %"PRId64" ms\n", s->dns_time_ms);
+    }
     if (ret) {
         av_log(h, AV_LOG_ERROR,
                "Failed to resolve hostname %s: %s\n",
@@ -161,6 +170,7 @@ static int tcp_open(URLContext *h, const char *uri, int flags)
         // Socket descriptor already closed here. Safe to overwrite to client one.
         fd = ret;
     } else {
+        int64_t tcp_start = av_gettime_relative();
         if ((ret = ff_listen_connect(fd, cur_ai->ai_addr, cur_ai->ai_addrlen,
                                      s->open_timeout / 1000, h, !!cur_ai->ai_next)) < 0) {
 
@@ -169,6 +179,8 @@ static int tcp_open(URLContext *h, const char *uri, int flags)
             else
                 goto fail;
         }
+        s->tcp_connect_time_ms = (av_gettime_relative() - tcp_start) / 1000;
+        av_log(h, AV_LOG_INFO, "tcp connect time: %"PRId64" ms\n", s->tcp_connect_time_ms);
     }
 
     h->is_streamed = 1;

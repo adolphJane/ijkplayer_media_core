@@ -120,6 +120,7 @@ typedef struct HTTPContext {
     int is_multi_client;
     HandshakeState handshake_step;
     int is_connected_server;
+    int64_t http_request_time_ms;
 } HTTPContext;
 
 #define OFFSET(x) offsetof(HTTPContext, x)
@@ -160,6 +161,8 @@ static const AVOption options[] = {
     { "listen", "listen on HTTP", OFFSET(listen), AV_OPT_TYPE_INT, { .i64 = 0 }, 0, 2, D | E },
     { "resource", "The resource requested by a client", OFFSET(resource), AV_OPT_TYPE_STRING, { .str = NULL }, 0, 0, E },
     { "reply_code", "The http status code to return to a client", OFFSET(reply_code), AV_OPT_TYPE_INT, { .i64 = 200}, INT_MIN, 599, E},
+    { "http_code", "HTTP response status code", OFFSET(http_code), AV_OPT_TYPE_INT, { .i64 = 0 }, 0, 599, AV_OPT_FLAG_EXPORT | AV_OPT_FLAG_READONLY },
+    { "http_request_time", "HTTP request time in milliseconds", OFFSET(http_request_time_ms), AV_OPT_TYPE_INT64, { .i64 = 0 }, 0, INT64_MAX, AV_OPT_FLAG_EXPORT | AV_OPT_FLAG_READONLY },
     { NULL }
 };
 
@@ -1132,34 +1135,41 @@ static int http_connect(URLContext *h, const char *path, const char *local_path,
     }
 
 
-    if ((err = ffurl_write(s->hd, s->buffer, strlen(s->buffer))) < 0)
-        goto done;
+    {
+        int64_t http_req_start = av_gettime_relative();
 
-    if (s->post_data)
-        if ((err = ffurl_write(s->hd, s->post_data, s->post_datalen)) < 0)
+        if ((err = ffurl_write(s->hd, s->buffer, strlen(s->buffer))) < 0)
             goto done;
 
-    /* init input buffer */
-    s->buf_ptr          = s->buffer;
-    s->buf_end          = s->buffer;
-    s->line_count       = 0;
-    s->off              = 0;
-    s->icy_data_read    = 0;
-    s->filesize         = UINT64_MAX;
-    s->willclose        = 0;
-    s->end_chunked_post = 0;
-    s->end_header       = 0;
-    if (post && !s->post_data && !send_expect_100) {
-        /* Pretend that it did work. We didn't read any header yet, since
-         * we've still to send the POST data, but the code calling this
-         * function will check http_code after we return. */
-        s->http_code = 200;
-        err = 0;
-        goto done;
-    }
+        if (s->post_data)
+            if ((err = ffurl_write(s->hd, s->post_data, s->post_datalen)) < 0)
+                goto done;
 
-    /* wait for header */
-    err = http_read_header(h, new_location);
+        /* init input buffer */
+        s->buf_ptr          = s->buffer;
+        s->buf_end          = s->buffer;
+        s->line_count       = 0;
+        s->off              = 0;
+        s->icy_data_read    = 0;
+        s->filesize         = UINT64_MAX;
+        s->willclose        = 0;
+        s->end_chunked_post = 0;
+        s->end_header       = 0;
+        if (post && !s->post_data && !send_expect_100) {
+            /* Pretend that it did work. We didn't read any header yet, since
+             * we've still to send the POST data, but the code calling this
+             * function will check http_code after we return. */
+            s->http_code = 200;
+            err = 0;
+            goto done;
+        }
+
+        /* wait for header */
+        err = http_read_header(h, new_location);
+
+        s->http_request_time_ms = (av_gettime_relative() - http_req_start) / 1000;
+        av_log(h, AV_LOG_INFO, "http request time: %"PRId64" ms\n", s->http_request_time_ms);
+    }
     if (err < 0)
         goto done;
 
