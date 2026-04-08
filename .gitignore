@@ -13,6 +13,7 @@ extra/init-extra.sh
 ijkmedia/ijkyuv/
 ijkmedia/ijksoundtouch
 ijkprof/android-ndk-profiler/
+android/contrib/build/
 
 # built application files
 *.apk

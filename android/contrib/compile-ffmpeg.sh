@@ -26,8 +26,9 @@ FF_TARGET_EXTRA=$2
 set -e
 set +x
 
-FF_ACT_ARCHS_32="armv5 armv7a"
-FF_ACT_ARCHS_64="armv5 armv7a arm64"
+# 先去除armv5
+FF_ACT_ARCHS_32="armv7a"
+FF_ACT_ARCHS_64="armv7a arm64"
 FF_ACT_ARCHS_ALL=$FF_ACT_ARCHS_64
 
 echo_archs() {

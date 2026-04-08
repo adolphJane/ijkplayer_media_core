@@ -347,11 +347,11 @@ do
 done
 
 $CC -lm -lz -shared --sysroot=$FF_SYSROOT -Wl,--no-undefined -Wl,-z,noexecstack $FF_EXTRA_LDFLAGS \
-    -Wl,-soname,libijkffmpeg.so \
+    -Wl,-soname,libtvtbffmpeg.so \
     $FF_C_OBJ_FILES \
     $FF_ASM_OBJ_FILES \
     $FF_DEP_LIBS \
-    -o $FF_PREFIX/libijkffmpeg.so
+    -o $FF_PREFIX/libtvtbffmpeg.so
 
 mysedi() {
     f=$1
@@ -369,7 +369,7 @@ echo "--------------------"
 rm -rf $FF_PREFIX/shared
 mkdir -p $FF_PREFIX/shared/lib/pkgconfig
 ln -s $FF_PREFIX/include $FF_PREFIX/shared/include
-ln -s $FF_PREFIX/libijkffmpeg.so $FF_PREFIX/shared/lib/libijkffmpeg.so
+ln -s $FF_PREFIX/libtvtbffmpeg.so $FF_PREFIX/shared/lib/libtvtbffmpeg.so
 cp $FF_PREFIX/lib/pkgconfig/*.pc $FF_PREFIX/shared/lib/pkgconfig
 for f in $FF_PREFIX/lib/pkgconfig/*.pc; do
     # in case empty dir
@@ -380,10 +380,10 @@ for f in $FF_PREFIX/lib/pkgconfig/*.pc; do
     f=$FF_PREFIX/shared/lib/pkgconfig/`basename $f`
     # OSX sed doesn't have in-place(-i)
     mysedi $f 's/\/output/\/output\/shared/g'
-    mysedi $f 's/-lavcodec/-lijkffmpeg/g'
-    mysedi $f 's/-lavfilter/-lijkffmpeg/g'
-    mysedi $f 's/-lavformat/-lijkffmpeg/g'
-    mysedi $f 's/-lavutil/-lijkffmpeg/g'
-    mysedi $f 's/-lswresample/-lijkffmpeg/g'
-    mysedi $f 's/-lswscale/-lijkffmpeg/g'
+    mysedi $f 's/-lavcodec/-ltvtbffmpeg/g'
+    mysedi $f 's/-lavfilter/-ltvtbffmpeg/g'
+    mysedi $f 's/-lavformat/-ltvtbffmpeg/g'
+    mysedi $f 's/-lavutil/-ltvtbffmpeg/g'
+    mysedi $f 's/-lswresample/-ltvtbffmpeg/g'
+    mysedi $f 's/-lswscale/-ltvtbffmpeg/g'
 done
