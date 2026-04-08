@@ -5,10 +5,6 @@ android/ffmpeg-*
 android/openssl-*
 ios/ffmpeg-*
 ios/openssl-*
-extra/libyuv/
-extra/openssl/
-extra/soundtouch/
-extra/init-extra.sh
 .DS_Store
 ijkmedia/ijkyuv/
 ijkmedia/ijksoundtouch
