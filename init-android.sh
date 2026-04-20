@@ -41,8 +41,8 @@ function pull_fork()
 }
 
 # pull_fork "armv5"
-pull_fork "armv7a"
-pull_fork "arm64"
+# pull_fork "armv7a"
+# pull_fork "arm64"
 # pull_fork "x86"
 # pull_fork "x86_64"
 
